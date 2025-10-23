@@ -2,3 +2,8 @@ jingle/
 non_jingle/
 
 venv/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

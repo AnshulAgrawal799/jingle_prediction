@@ -2,6 +2,7 @@ import os
 import numpy as np
 import librosa
 import joblib
+import soundfile as sf  # Required for OPUS support
 from typing import Union, Tuple, Optional
 import logging
 
@@ -9,24 +10,36 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def extract_features(file_path: str, sr: int = 22050, n_mfcc: int = 13) -> np.ndarray:
+def extract_features(file_path: str, sr: int = 48000, n_mfcc: int = 13) -> np.ndarray:
     """
-    Extract MFCC features from an audio file.
+    Extract MFCC features from an audio file (supports OPUS and other formats).
     
     Args:
-        file_path: Path to the audio file
-        sr: Sample rate (default: 22050)
+        file_path: Path to the audio file (supports .opus, .wav, etc.)
+        sr: Sample rate (default: 48000, standard for OPUS)
         n_mfcc: Number of MFCC coefficients to extract (default: 13)
         
     Returns:
         np.ndarray: Extracted MFCC features averaged over time
     """
     try:
-        y, sr = librosa.load(file_path, sr=sr, mono=True)
+        # Use soundfile as backend for better format support including OPUS
+        y, sr = librosa.load(
+            file_path,
+            sr=sr,
+            mono=True,
+            res_type='kaiser_fast',
+            offset=0.0,
+            duration=None,
+            dtype=np.float32
+        )
+        
+        # Extract MFCC features
         mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
         return np.mean(mfccs.T, axis=0)  # Average over time frames
     except Exception as e:
         logger.error(f"Error extracting features from {file_path}: {str(e)}")
+        logger.error(f"Supported formats: {librosa.get_samplerate(file_path)} Hz, {librosa.get_duration(filename=file_path):.2f} sec")
         raise
 
 def predict_jingle(file_path: str, model_path: str = 'jingle_detector_model.pkl') -> Tuple[str, float]:

@@ -65,7 +65,10 @@ def save_prediction_result(audio_file_path, prediction_result, output_dir='predi
         return False
 
 
-def predict_jingle(file_path, model_path='jingle_detector_model.pkl', output_dir='predictions', save_results=True):
+def predict_jingle(file_path, model_path=None, output_dir='predictions', save_results=True):
+    """Predict whether a file contains a jingle. Returns (result_text, confidence_percent)."""
+    if model_path is None:
+        model_path = 'jingle_detector_model.pkl'
     """Predict whether a file contains a jingle. Returns (result_text, confidence_percent)."""
     clf = joblib.load(model_path)
     mfccs = extract_features(file_path)
